@@ -9,10 +9,13 @@ installation:
 npm install
 ```
 
-running:
+instructions for running. first, make sure that the slack app is _closed_. then:
 
-```
-open -a Slack --args --remote-debugging-port=2121 # first run slack with remote debugging port open (OSX)
+```sh
+# run slack with remote debugging port open (OSX)
+open -a Slack --args --remote-debugging-port=2121
+
+# inject our own styling
 node index.js
 ```
 
