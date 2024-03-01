@@ -2,66 +2,77 @@ const CDP = require('chrome-remote-interface');
 
 
 
+
+
+
 function setupQuieter() {
-    let rawStyle = `
-.quietstyle .c-mention_badge { display: none }
-
-.quietstyle .p-channel_sidebar__channel--unread:not(.p-channel_sidebar__channel--muted):not(.p-channel_sidebar__channel--suggested) .p-channel_sidebar__name {
+  const quietStyle = `
+  .quietstyle .c-mention_badge { display: none }
+  
+  .quietstyle .c-button-unstyled p-channel_sidebar__banner p-channel_sidebar__banner--mentions p-channel_sidebar__banner--bottom {
+    display: none !important;
+  }
+  
+  .quietstyle .p-channel_sidebar__channel--unread:not(.p-channel_sidebar__channel--muted):not(.p-channel_sidebar__channel--suggested) .p-channel_sidebar__name {
+      font-weight: 400; color: inherit !important;
+  }
+  
+  .quietstyle .c-button-unstyled.p-channel_sidebar__banner.p-channel_sidebar__banner--mentions {
+    display: none;
+  }
+  
+  .quietstyle .p-channel_sidebar__link--unread .p-channel_sidebar__name {
     font-weight: 400; color: inherit !important;
-}
+  }
+  
+  .quietstyle button.c-button-unstyled.p-channel_sidebar__banner.p-channel_sidebar__banner--unreads {
+      display: none
+  }
+  
+  .quietstyle .p-team_sidebar__unread_dot  {
+    display: none !important
+  }
+  
+  .quietstyle .p-channel_sidebar__channel--unread:not(.p-channel_sidebar__channel--muted):not(.p-channel_sidebar__channel--selected) .p-channel_sidebar__channel_icon_prefix:not(.c-presence):not(.p-channel_sidebar__channel_icon_prefix--sidebar_simplification) {
+    color: inherit !important
+  }
+  
+  .quietstyle .p-channel_sidebar__channel--unread:not(.p-channel_sidebar__channel--muted):not(.p-channel_sidebar__channel--suggested):not(.p-channel_sidebar__channel--typing) .p-channel_sidebar__channel_icon_prefix.c-icon--channel-pane-hash::before {
+    content: '\E125' !important;
+  }
+  
+  .quietstyle .c-icon--mentions:before {
+    content: '\E009' !important;
+  }
+  
+  .quietstyle .p-threads_view__bottom_banners {
+    display: none !important;
+  }
+  
+  .quietstyle .p-team_sidebar__unread_dot {
+    display: none;
+  }
+  
+  .quietstyle .p-team_sidebar__mentions_badge {
+    display: none;
+  }
+  
+  .quietstyle .quiettoggler {
+      border: 1px solid gray; border-radius: 2px; float: left; padding: 3px;
+  }
+  
+  .quietstyle .quiettoggler:active {
+      background-color: black; color: white; float: left; padding: 3px; border: 1px solid white;
+  }
+  `;
 
-.quietstyle .c-button-unstyled.p-channel_sidebar__banner.p-channel_sidebar__banner--mentions {
-  display: none;
-}
-
-.quietstyle .p-channel_sidebar__link--unread .p-channel_sidebar__name {
-  font-weight: 400; color: inherit !important;
-}
-
-.quietstyle button.c-button-unstyled.p-channel_sidebar__banner.p-channel_sidebar__banner--unreads {
-    display: none
-}
-
-.quietstyle .p-team_sidebar__unread_dot  {
-  display: none !important
-}
-
-.quietstyle .p-channel_sidebar__channel--unread:not(.p-channel_sidebar__channel--muted):not(.p-channel_sidebar__channel--selected) .p-channel_sidebar__channel_icon_prefix:not(.c-presence):not(.p-channel_sidebar__channel_icon_prefix--sidebar_simplification) {
-  color: inherit !important
-}
-
-.quietstyle .p-channel_sidebar__channel--unread:not(.p-channel_sidebar__channel--muted):not(.p-channel_sidebar__channel--suggested):not(.p-channel_sidebar__channel--typing) .p-channel_sidebar__channel_icon_prefix.c-icon--channel-pane-hash::before {
-  content: '\E125' !important;
-}
-
-.quietstyle .c-icon--mentions:before {
-  content: '\E009' !important;
-}
-
-.quietstyle .p-threads_view__bottom_banners {
-  display: none !important;
-}
-
-.quietstyle .p-team_sidebar__unread_dot {
-  display: none;
-}
-
-.quietstyle .p-team_sidebar__mentions_badge {
-  display: none;
-}
-
-.quietstyle .quiettoggler {
-    border: 1px solid gray; border-radius: 2px; float: left; padding: 3px;
-}
-
-.quietstyle .quiettoggler:active {
-    background-color: black; color: white; float: left; padding: 3px; border: 1px solid white;
-}
-`
-    // check if we've already set up a style
+  let isQuiet = false;
+  let quietStyleRefresherId = 0;
+  function goQuiet() {
+    isQuiet = true;
     let styleEl = document.getElementById('quiet-style-creator')
     if (styleEl === null) {
-        let styleDefs = rawStyle.trim().split("\n\n").map((def) => def.replace(/\n/g," "))
+        let styleDefs = quietStyle.trim().split("\n\n").map((def) => def.replace(/\n/g," "))
         styleEl = document.createElement('style')
         styleEl.setAttribute('id','quiet-style-creator')
 
@@ -70,23 +81,62 @@ function setupQuieter() {
             styleEl.innerHTML += "\n"
         }
         document.head.appendChild(styleEl);
+      }
 
-        let navArea = document.getElementsByClassName('p-top_nav__right')[0];
-        let toggleButton = document.createElement('button');
-        toggleButton.classList.add('quiettoggler')
-        toggleButton.setAttribute('id','quiet-toggler')
-        toggleButton.innerText='toggle quiet'
-        toggleButton.onclick = function() {
-            let bodyClassList = Array.prototype.slice.call(document.body.classList,0);
+      let bodyClassList = Array.prototype.slice.call(document.body.classList,0);
 
-            if (!bodyClassList.some((cls) => cls==='quietstyle')) {
-                document.body.classList.add('quietstyle')
-            } else {
-                document.body.classList.remove('quietstyle')
-            }        
-        }
+      if (!bodyClassList.some((cls) => cls==='quietstyle')) {
+          document.body.classList.add('quietstyle')
+      }
+      quietStyleRefresherId = setInterval(function() {
+        goQuiet()
+      },30000)
+  }
+
+  function goNoisy() {
+    clearInterval(quietStyleRefresherId)
+    isQuiet = false;
+  }
+  
+  // check if we've already set up a style
+  let styleEl = document.getElementById('quiet-style-creator')
+  if (styleEl === null) {
+      let styleDefs = quietStyle.trim().split("\n\n").map((def) => def.replace(/\n/g," "))
+      styleEl = document.createElement('style')
+      styleEl.setAttribute('id','quiet-style-creator')
+
+      for (var styleDef of styleDefs) {
+          styleEl.innerHTML += styleDef;
+          styleEl.innerHTML += "\n"
+      }
+      document.head.appendChild(styleEl);
+
+      // let navArea = document.getElementsByClassName('p-top_nav__right')[0];
+      let navArea = document.getElementsByClassName("p-ia4_top_nav__right_container")[0];
+      let toggleButton = document.createElement('button');
+      toggleButton.classList.add('quiettoggler')
+      toggleButton.setAttribute('id','quiet-toggler')
+      toggleButton.innerText='toggle quiet'
+
+
+
+      toggleButton.onclick = function() {
+
+          // let bodyClassList = Array.prototype.slice.call(document.body.classList,0);
+
+          if (!isQuiet) {
+              goQuiet()
+          } else {
+              goNoisy()
+          }        
+      }
+      if (navArea) {
         navArea.prepend(toggleButton)
-    }    
+      } else {
+        console.log('could not find nav area')
+      }
+      toggleButton.onclick()
+  }
 }
 
 

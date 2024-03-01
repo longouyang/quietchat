@@ -20,3 +20,9 @@ node index.js
 ```
 
 this works by injecting custom CSS / JS into the electron app
+
+# developer notes
+
+first make sure 2121 is a discovery target in chrome://inspect/#devices
+
+after launching slack with rdp, it shoudl apppear in chrome://inspect/#devices, can click inspect on certain pages to understand the css structure
