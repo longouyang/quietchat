@@ -96,6 +96,12 @@ function setupQuieter() {
   function goNoisy() {
     clearInterval(quietStyleRefresherId)
     isQuiet = false;
+    // remove quietstyle from body
+    let bodyClassList = Array.prototype.slice.call(document.body.classList,0);
+    if (bodyClassList.some((cls) => cls==='quietstyle')) {
+        document.body.classList.remove('quietstyle')
+    }
+
   }
   
   // check if we've already set up a style
